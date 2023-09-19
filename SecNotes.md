@@ -1,12 +1,22 @@
 ![](assets/Pasted%20image%2020230919141345.png)
 # Summary
 #### Findings:
-
-
+* SQL injection in the Username value of http://10.129.107.231/register.php.
+	* Gives attackers the ability to see information from other users.
+* Guessable usernames when logging into http://10.129.107.231/login.php
+	* When trying to login with an account, it will tell the user if the username exists. This allows attackers to enumerate usernames, and possibly brute force passwords.
+* Clear text passwords stored on web server and bash history.
+	* Gives attackers access to accounts that they would otherwise not have access to.
 
 #### Recommendations:
-
-
+* SQL injection
+	* All inputs from a user on the web server should be sanitized.
+* Guessable usernames
+	* When attempting to login with an account that does not exist, a generic error messages should be displayed. Such as "Invalid username or password."
+* Clear text passwords
+	* Passwords should not be stored in clear text, anyone who gains access to the file system will be able to see them.
+* Passwords stored in bash history
+	* This can be avoided by stopping history logging or sending history to /dev/null instead. More info here: https://attack.mitre.org/techniques/T1552/003/
 # Attack Narrative
 ### Enumeration
 * An nmap scan revealed open ports on 80,445, and 8808.  
