@@ -11,8 +11,8 @@
 #### Recommendations:
 * SQL injection
 	* All inputs from a user on the web server should be sanitized.
-* Guessable usernames
-	* When attempting to login with an account that does not exist, a generic error messages should be displayed. Such as "Invalid username or password."
+* Username enumeration
+	* When attempting to login with an account that does not exist, generic error messages should be displayed. Such as "Invalid username or password."
 * Clear text passwords
 	* Passwords should not be stored in clear text, anyone who gains access to the file system will be able to see them.
 * Passwords stored in bash history
@@ -22,28 +22,29 @@
 * An nmap scan revealed open ports on 80,445, and 8808.  
    ![](assets/Pasted%20image%2020230919141407.png)
 
-### Foothold
-* I connected to the web server on port 80 using http://10.129.107.231/, and was redirected to a login page at http://10.129.107.231/login.php.
-* I tried logging in with common user names and password combinations, such as admin and password. When username was invalid, I received a response saying that there was no account with that username. This leaves the application open to user enumeration and password brute forcing.  
+### Exploited vulnerabilities
+* A connection to the web server was established on port 80 using http://10.129.107.231/, which was redirected to a login page at http://10.129.107.231/login.php.
+* The tester attempted to log in with common user names and password combinations, such as 'admin' and 'password'. When logging in with an invalid username, a response was received stating that there was no account with that username. This leaves the application open to user enumeration and password brute forcing.  
   ![](assets/Pasted%20image%2020230919141421.png)
-* When signing up for an account I was able to find a SQLI vulnerability that allowed me to see other users notes that were stored on the web page. I signed up with an account and used the username ' or '1'='1.  
+* When signing up for an account an SQLI vulnerability was exposed. An account was made for the username ' or '1'='1. Since the input for username is not sanitized before returning to the server, an attacker is able to manipulate SQL statements used in this parameter.  
    ![](assets/Pasted%20image%2020230919141430.png)
-* Since the username allowed any characters and was not sanitized, when I logged in with my new account, I was able to see other users notes.  
+* Because of the SQLI, when signing in with this account all other users notes are visible. 
 ![](assets/Pasted%20image%2020230919141441.png)
-* In these notes was a username and password for an smb share named new-site. I was able to login with read and write capabilities to this smb share.  
+* In these notes was a username and password for an SMB share named new-site. The tester was able to login with read and write capabilities to this SMB share.  
   ![](assets/Pasted%20image%2020230919141449.png)
-* I was able to verify that this smb share was the directory for the web server on port 8808 by uploading a file and accessing it through http://10.129.107.231:8808/test.txt.   
+* The tester was able to verify that this SMB share was the directory for the web server on port 8808 by uploading a file and accessing it through http://10.129.107.231:8808/test.txt.   
   ![](assets/Pasted%20image%2020230919141500.png)
-* I used php code that allows for code execution if accessed.  
+* Because of the write access to the website directory, PHP code can be to be used to allow for code execution when accessed accessed.  
    ![](assets/Pasted%20image%2020230919141510.png)
-* I then uploaded this php file as well as a netcat binary to the smb server.   ![](assets/Pasted%20image%2020230919141520.png)
-* I started the nc binary via the php code execution and was able to land a shell as tyler.  
+* The PHP  file as well as a Netcat binary was uploaded to the website directory, using the smb server.   
+![](assets/Pasted%20image%2020230919141520.png)
+* The Netcat binary was started via the PHP code execution, which gave the tester a shell as the user tyler.  
 ![](assets/Pasted%20image%2020230919141527.png)  
 ![](assets/Pasted%20image%2020230919141533.png)
 ### Privilege Escalation
-* In the file system there is a bash.lnk file, indicating possible Windows Subsystem for Linux installation. I searched for the bash.exe file, found and executed it.  
+* In the file system there is a bash.lnk file, indicating possible Windows Subsystem for Linux installation. After searching for the bash.exe, the file was executed.  
 ![](assets/Pasted%20image%2020230919141541.png)
-* I upgraded the shell to a pty shell, and check the history, finding admin smb credentials.  
+* The shell was upgraded to a pty shell, to provide more functionality. When checking the bash history, administrator credentials for the SMB share were revealed. 
 ![](assets/Pasted%20image%2020230919141547.png)
-* I used those credentials with psexec and was able to gain full access to the system.  
+* The administrator credentials were used with psexec and the tester was able to gain full access to the system.  
 ![](assets/Pasted%20image%2020230919141556.png)
